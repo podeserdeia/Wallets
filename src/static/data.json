@@ -1,0 +1,54 @@
+{
+  "wallets": [
+    {
+      "id": 1,
+      "name": "Minha Carteira Principal",
+      "address": "0x1234567890abcdef1234567890abcdef12345678",
+      "balances": [
+        {
+          "id": 1,
+          "network": "Ethereum",
+          "token": "ETH",
+          "balance": 0.5
+        },
+        {
+          "id": 2,
+          "network": "BSC",
+          "token": "BNB",
+          "balance": -0.1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Carteira Secundária",
+      "address": "0xabcdef1234567890abcdef1234567890abcdef12",
+      "balances": []
+    }
+  ],
+  "transactions": [
+    {
+      "id": 1,
+      "wallet_id": 1,
+      "network": "Ethereum",
+      "token": "ETH",
+      "type": "entrada",
+      "amount": 0.5,
+      "description": "Compra de ETH na exchange",
+      "date": "2025-07-15T10:34:49.292068"
+    },
+    {
+      "id": 2,
+      "wallet_id": 1,
+      "network": "BSC",
+      "token": "BNB",
+      "type": "saida",
+      "amount": 0.1,
+      "description": "Transferência para DeFi",
+      "date": "2025-07-15T10:39:05.838210"
+    }
+  ],
+  "next_wallet_id": 3,
+  "next_transaction_id": 3,
+  "next_balance_id": 3
+}

@@ -1,0 +1,418 @@
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallets</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <div class="container">
+        <div class="main-dashboard">
+            <div class="net-worth-card">
+                <div class="net-worth-header">
+                    <div class="net-worth-title">
+                        <span class="net-worth-label">Saldo Total</span>
+                        <button class="visibility-toggle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="net-worth-amount">$188,39</div>
+
+                <div class="astronaut-cat">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjQ1IiBmaWxsPSIjNjY3ZWVhIi8+CjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjUiIGZpbGw9IndoaXRlIi8+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNDAiIHI9IjUiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA2MFE1MCA3MCA2MCA2MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIi8+Cjx0ZXh0IHg9IjUwIiB5PSI4NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5DYXQ8L3RleHQ+Cjwvc3ZnPgo=" alt="Astronaut Cat" />
+                </div>
+            </div>
+            
+            <div class="wallet-breakdown-card">
+                <div class="breakdown-header">
+                    <h3>Detalhamento da carteira</h3>
+                    <div class="breakdown-tabs">
+                        <button class="breakdown-tab active">Assets</button>
+                    </div>
+                </div>
+                
+                <div class="your-assets">
+                    <span class="assets-label">Meus ativos</span>
+                    <div class="assets-progress-bar">
+                        <div class="progress-segment inf" style="width: 39.01%"></div>
+                        <div class="progress-segment jito" style="width: 29.28%"></div>
+                        <div class="progress-segment bonk" style="width: 15.39%"></div>
+                        <div class="progress-segment wsol" style="width: 9.20%"></div>
+                        <div class="progress-segment ssol" style="width: 4.57%"></div>
+                        <div class="progress-segment others" style="width: 2.55%"></div>
+                    </div>
+                </div>
+                
+                <div class="assets-list">
+                    <div class="asset-item">
+                        <div class="asset-icon inf-icon"></div>
+                        <div class="asset-info">
+                            <span class="asset-name">INF</span>
+                            <span class="asset-percentage">39.01%</span>
+                        </div>
+                    </div>
+                    <div class="asset-item">
+                        <div class="asset-icon jito-icon"></div>
+                        <div class="asset-info">
+                            <span class="asset-name">JitoSOL</span>
+                            <span class="asset-percentage">29.28%</span>
+                        </div>
+                    </div>
+                    <div class="asset-item">
+                        <div class="asset-icon bonk-icon"></div>
+                        <div class="asset-info">
+                            <span class="asset-name">bonkSOL</span>
+                            <span class="asset-percentage">15.39%</span>
+                        </div>
+                    </div>
+                    <div class="asset-item">
+                        <div class="asset-icon wsol-icon"></div>
+                        <div class="asset-info">
+                            <span class="asset-name">wSOL</span>
+                            <span class="asset-percentage">9.20%</span>
+                        </div>
+                    </div>
+                    <div class="asset-item">
+                        <div class="asset-icon ssol-icon"></div>
+                        <div class="asset-info">
+                            <span class="asset-name">sSOL</span>
+                            <span class="asset-percentage">4.57%</span>
+                        </div>
+                    </div>
+                    <div class="asset-item">
+                        <div class="asset-icon others-icon"></div>
+                        <div class="asset-info">
+                            <span class="asset-name">Others (5)</span>
+                            <span class="asset-percentage">13.06%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="positions-section">
+            <div class="positions-header">
+                <div class="positions-tabs">
+                    <button class="position-tab active" data-position-tab="positions">
+                        <i class="fas fa-link"></i>
+                        Positions
+                    </button>
+                    <button class="position-tab" data-position-tab="wallets">
+                        <i class="fas fa-wallet"></i>
+                        Wallets
+                    </button>
+                    <button class="position-tab" data-position-tab="transactions">
+                        <i class="fas fa-exchange-alt"></i>
+                        Transactions
+                    </button>
+                </div>
+                <button class="collapse-btn">
+                    Collapse <i class="fas fa-chevron-up"></i>
+                </button>
+            </div>
+            
+            <div class="position-content active" id="positions-content">
+                <div class="positions-grid">
+                    <div class="position-card personal">
+                        <div class="position-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="position-content" id="wallets-content">
+                <div class="section-header">
+                    <h2>Gerenciar Carteiras</h2>
+                    <button id="showAddWalletModalBtn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Adicionar Carteira
+                    </button>
+                </div>
+                
+                <div class="wallets-grid" id="walletsGrid"></div>
+            </div>
+            
+            <div class="position-content" id="transactions-content">
+                <div class="section-header">
+                    <h2>Transações</h2>
+                    <button class="btn btn-primary" onclick="showAddTransactionModal()">
+                        <i class="fas fa-plus"></i> Adicionar Transação
+                    </button>
+                </div>
+                
+                <div class="filters">
+                    <select id="walletFilter" class="filter-select">
+                        <option value="">Todas as carteiras</option>
+                    </select>
+                    <select id="networkFilter" class="filter-select">
+                        <option value="">Todas as redes</option>
+                    </select>
+                    <select id="tokenFilter" class="filter-select">
+                        <option value="">Todos os tokens</option>
+                    </select>
+                </div>
+                
+                <div class="transactions-list" id="transactionsList"></div>
+            </div>
+        </div>
+
+        <div class="original-content" style="display: none;">
+            <header class="header">
+                <h1><i class="fas fa-wallet"></i> Wallets</h1>
+                <p>Gerencie suas carteiras de criptomoedas com múltiplas redes e tokens</p>
+            </header>
+
+            <nav class="nav-tabs">
+                <button class="tab-btn active" data-tab="dashboard">
+                    <i class="fas fa-chart-pie"></i> Dashboard
+                </button>
+                <button class="tab-btn" data-tab="wallets">
+                    <i class="fas fa-wallet"></i> Wallets
+                </button>
+                <button class="tab-btn" data-tab="transactions">
+                    <i class="fas fa-exchange-alt"></i> Transações
+                </button>
+            </nav>
+
+            <div class="tab-content active" id="dashboard">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3><i class="fas fa-network-wired"></i> Saldos por Rede</h3>
+                        <div id="networkBalances" class="network-list"></div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3><i class="fas fa-coins"></i> Saldos por Token</h3>
+                        <div id="tokenBalances" class="token-list"></div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3><i class="fas fa-list"></i> Carteiras</h3>
+                        <div id="walletsList" class="wallets-summary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template id="walletCardTemplate">
+            <div class="wallet-card wallet-card-expanded">
+                <div class="wallet-header">
+                    <div class="wallet-name"></div>
+                    <button class="btn btn-danger btn-delete-wallet" title="Remover carteira">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="wallet-address"></div>
+                <div class="wallet-total-balance"></div>
+                <div class="wallet-networks">
+                    <button class="add-network-btn">
+                        <i class="fas fa-plus"></i> Adicionar Rede/Token
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <div class="tab-content" id="wallets">
+            <div class="section-header">
+                <h2>Gerenciar Carteiras</h2>
+                <button id="showAddWalletModalBtn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Adicionar Carteira
+                </button>
+            </div>
+            
+            <div class="wallets-grid" id="walletsGrid"></div>
+        </div>
+
+        <div class="tab-content" id="transactions">
+            <div class="section-header">
+                <h2>Transações</h2>
+                <button class="btn btn-primary" onclick="showAddTransactionModal()">
+                    <i class="fas fa-plus"></i> Adicionar Transação
+                </button>
+            </div>
+            
+            <div class="filters">
+                <select id="walletFilter" class="filter-select">
+                    <option value="">Todas as carteiras</option>
+                </select>
+                <select id="networkFilter" class="filter-select">
+                    <option value="">Todas as redes</option>
+                </select>
+                <select id="tokenFilter" class="filter-select">
+                    <option value="">Todos os tokens</option>
+                </select>
+            </div>
+            
+            <div class="transactions-list" id="transactionsList"></div>
+        </div>
+    </div>
+
+    <div class="tokens-section">
+        <div class="container">
+            <div class="tokens-header">
+                <div class="tokens-title">
+                    <h2>Tokens <span class="tokens-count">$0</span></h2>
+                </div>
+                <div class="tokens-filters">
+                    </div>
+            </div>
+            
+            <div class="tokens-table-wrapper">
+                <table class="tokens-table">
+                    <thead>
+                        <tr>
+                            <th>Token <i class="fas fa-info-circle"></i></th>
+                            <th>Type <i class="fas fa-info-circle"></i></th>
+                            <th>Balance <i class="fas fa-info-circle"></i></th>
+                            <th>Current Price <i class="fas fa-info-circle"></i></th>
+                            <th>Value <i class="fas fa-info-circle"></i></th>
+                            </tr>
+                    </thead>
+                    <tbody id="tokensTableBody">
+                        </tbody>
+                </table>
+                <div id="tokensEmptyState" class="empty-state" style="display: none;">
+                    <i class="fas fa-coins"></i>
+                    <h3>Nenhum token encontrado</h3>
+                    <p>Adicione carteiras e redes para ver seus tokens aqui.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addWalletModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Nova Carteira</h3>
+                <button class="close-btn" onclick="closeModal('addWalletModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addWalletForm">
+                <div class="form-group">
+                    <label for="walletName">Nome da Carteira</label>
+                    <input type="text" id="walletName" required>
+                </div>
+                <div class="form-group">
+                    <label for="walletAddress">Endereço</label>
+                    <input type="text" id="walletAddress" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addWalletModal')">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="addNetworkModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Rede e Token à Carteira</h3>
+                <button class="close-btn" onclick="closeModal('addNetworkModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addNetworkForm">
+                <div class="form-group">
+                    <label for="networkInput">Rede</label>
+                    <div class="input-with-suggestions">
+                        <input type="text" id="networkInput" list="networkSuggestions" placeholder="Digite ou selecione uma rede" required>
+                        <datalist id="networkSuggestions">
+                            <option value="Bitcoin">
+                            <option value="Ethereum">
+                            <option value="Arbitrum">
+                            <option value="Polygon">
+                            <option value="BSC">
+                            <option value="Solana">
+                            <option value="Cardano">
+                            <option value="Avalanche">
+                            <option value="Optimism">
+                            <option value="BERA">
+                            <option value="BNB">
+                            <option value="Base">
+                            <option value="Zksync ERA">
+                        </datalist>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tokenInput">Token</label>
+                    <input type="text" id="tokenInput" placeholder="Ex: ETH, wETH, POL, USDC" required>
+                    <small class="form-hint">Digite o símbolo do token (ex: ETH, wETH, POL, USDC)</small>
+                </div>
+                <div class="form-group">
+                    <label for="initialBalance">Saldo Inicial (opcional)</label>
+                    <input type="number" id="initialBalance" step="0.00000001" min="0" value="0" placeholder="0.00000001">
+                    <small class="form-hint">Aceita até 8 casas decimais (ex: 0.00000001)</small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addNetworkModal')">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Adicionar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="addTransactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Nova Transação</h3>
+                <button class="close-btn" onclick="closeModal('addTransactionModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addTransactionForm">
+                <div class="form-group">
+                    <label for="transactionWallet">Carteira</label>
+                    <select id="transactionWallet" required>
+                        <option value="">Selecione uma carteira</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transactionNetworkToken">Rede e Token</label>
+                    <select id="transactionNetworkToken" required>
+                        <option value="">Selecione uma rede e token</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transactionType">Tipo</label>
+                    <select id="transactionType" required>
+                        <option value="">Selecione o tipo</option>
+                        <option value="entrada">Entrada</option>
+                        <option value="saida">Saída</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transactionAmount">Valor</label>
+                    <input type="number" id="transactionAmount" step="0.00000001" min="0" required placeholder="0.00000001">
+                    <small class="form-hint">Aceita até 8 casas decimais</small>
+                </div>
+                <div class="form-group">
+                    <label for="transactionDescription">Descrição</label>
+                    <input type="text" id="transactionDescription" placeholder="Descrição da transação">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addTransactionModal')">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
