@@ -343,7 +343,21 @@
                 </div>
                 <div class="form-group">
                     <label for="tokenInput">Token</label>
-                    <input type="text" id="tokenInput" placeholder="Ex: ETH, wETH, POL, USDC" required>
+                    <!-- <input type="text" id="tokenInput" placeholder="Ex: ETH, wETH, POL, USDC" required> -->
+                    <div class="dropdown">
+                        <input type="text" id="tokenInput" hidden required>
+                        <button class="btn-dropdown" type="button">
+                            <div class="btn-dropdown-text"><div>Ex: ETH, wETH, POL, USDC</div></div>
+                        </button>
+                        <div class="dropdown-menu">
+                            <input type="text" class="dropdown-search">
+                            <div class="dropdown-list">
+                                <div class="dropdown-item"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    </select>
                     <small class="form-hint">Digite o símbolo do token (ex: ETH, wETH, POL, USDC)</small>
                 </div>
                 <div class="form-group">
