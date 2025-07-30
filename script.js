@@ -4,6 +4,12 @@ function saveToLocalStorage() {
     localStorage.setItem("transactions", JSON.stringify(transactions));
 }
 
+// Defina a quantidade maxima de tokens ao pesquisar
+const SEARCH_MAX_LENGTH = 50;
+
+// Defina quanto tempo a lista de tokens deve persistir
+const TOKEN_PERSIST_DAYS = 1;
+
 // Dados padrão para carregar se o localStorage estiver vazio
 // Estes dados são baseados no seu arquivo data.json fornecido.
 const DEFAULT_INITIAL_DATA = {
@@ -62,6 +68,7 @@ const DEFAULT_INITIAL_DATA = {
 function loadFromLocalStorage() {
     const savedWallets = localStorage.getItem("wallets");
     const savedTransactions = localStorage.getItem("transactions");
+    const savedListOfTokens = localStorage.getItem("tokens");
 
     if (savedWallets) {
         wallets = JSON.parse(savedWallets);
@@ -78,17 +85,42 @@ function loadFromLocalStorage() {
         transactions = DEFAULT_INITIAL_DATA.transactions;
         console.log("Transações carregadas do DEFAULT_INITIAL_DATA.");
     }
+
+    if (savedListOfTokens) {
+        const local = JSON.parse(savedListOfTokens);
+
+        // Calculate the difference in milliseconds
+        const differenceMs = Math.abs((new Date()).getTime() - (new Date(local.date)).getTime());
+
+        const MS_PER_DAY = 1000 * 60 * 60 * 24;
+        // Convert the difference to days
+        const differenceDays = differenceMs / MS_PER_DAY;
+
+        // Check if the difference is more than 1 day
+        if( differenceDays > TOKEN_PERSIST_DAYS){
+            fetchAndSaveTokens();
+        }else{
+            console.log("Lista local");
+            listOfTokens = local.list;
+        }
+    } else {
+        fetchAndSaveTokens();
+    }
+
     // Salva os dados padrão no localStorage para futuras visitas
     saveToLocalStorage();
 }
 
 // Global variables
+let listOfTokens = [];
 let wallets = [];
 let transactions = [];
 let currentWalletId = null; // Usado para adicionar rede/token a uma carteira específica
 
 // CoinGecko API Base URL
 const COINGECKO_API_BASE_URL = 'https://api.coingecko.com/api/v3';
+const COINGECKO_LIST =  COINGECKO_API_BASE_URL + '/coins/list';
+// const COINGECKO_LIST =  '/list.json'; // de teste
 
 // Mapeamento simples de símbolo para CoinGecko ID
 // IMPORTANTE: Expanda este mapa com os IDs CoinGecko dos seus tokens reais.
@@ -152,6 +184,34 @@ async function fetchTokenPrice(tokenSymbol) {
         return 1; // Retorna 1 em caso de erro na rede ou parse
     }
 }
+
+/**
+ * Busca a lista dos tokens usando a CoinGecko API.
+ * @returns {Promise<Array<{id: string, symbol: string, name: string}} 
+ */
+async function fetchTokenList() {
+    try {
+        const response = await fetch(COINGECKO_LIST);
+        if (!response.ok) {
+            // Se a resposta não for OK (ex: 429 Too Many Requests, 404 Not Found)
+            console.error(`Erro ao buscar lista de tokens`);
+            return 1; // Retorna 1 em caso de erro na resposta
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`Falha na requisição da CoinGecko API para a lista de tokens:`, error);
+        return 1; // Retorna 1 em caso de erro na rede ou parse
+    }
+}
+
+function fetchAndSaveTokens(){
+    console.log("Nova lista carregada!");
+    fetchTokenList().then(s => {
+        listOfTokens = s;
+        localStorage.setItem("tokens", JSON.stringify({date: (new Date()).toUTCString(), list: s}));
+    });
+}
+
 
 
 /**
@@ -446,7 +506,90 @@ function setupNewDashboardInteractions() {
             }
         });
     }
+
+    const showSearching = document.querySelectorAll('.btn-dropdown');
+    showSearching.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const menu = this.parentElement.querySelector(".dropdown-menu");
+            menu.classList.add("show");
+            const input = menu.querySelector(".dropdown-search");
+            input.focus();
+        });
+    });
+
+    const hideSearching = document.querySelectorAll('.dropdown-search');
+    hideSearching.forEach(input => {
+        input.addEventListener('blur', function() {
+            const menu = this.closest(".dropdown-menu");
+            setTimeout(() => {
+                menu.classList.remove("show");
+            }, 100);
+        });
+
+        input.addEventListener('keyup', function() {
+            let filter = [];
+            const menu = this.closest(".dropdown-menu");
+            if(this.value.length > 0){
+                filter = listOfTokens.filter(s => s.symbol == this.value);
+
+                filter = [... filter, ...listOfTokens.filter(s => s.symbol.includes(this.value))];
+
+                // Filtrar pelo nome caso a quantidade maxina não tenha sido atingida
+                if(filter.length < SEARCH_MAX_LENGTH){
+                    filter = [... filter, ...listOfTokens.filter(s => s.name.includes(this.value))];
+                }
+
+                filter = filter.slice(0, SEARCH_MAX_LENGTH);
+            }
+            if(filter.length > 5){
+                menu.classList.add("full");
+            }else{
+                menu.classList.remove("full");
+            }
+
+            const list = this.parentElement.querySelector(".dropdown-list");
+            list.innerHTML = "";
+
+            filter.forEach(s => {
+                list.appendChild(createDropdownItemElement(s, this.value));
+            })
+        });
+    });
 }
+
+/**
+ * Creates a new dropdown item element based on token data.
+ * @param {object} token - An object containing id, symbol, and name properties.
+ * @param {string} token.id - The unique ID for the data-id attribute.
+ * @param {string} token.symbol - The symbol of the token (e.g., BTC).
+ * @param {string} token.name - The full name of the token (e.g., Bitcoin).
+ * @returns {HTMLDivElement} The newly created div element.
+ */
+function createDropdownItemElement(token) {
+    // 1. Create the <div> element
+    const dropdownItem = document.createElement('div');
+
+    // 2. Add the class 'dropdown-item'
+    dropdownItem.classList.add('dropdown-item');
+
+    // 3. Set the data-id attribute
+    dropdownItem.setAttribute('data-id', token.id);
+    dropdownItem.setAttribute('data-name', token.name);
+    // Alternatively, using dataset (more modern for data-* attributes):
+    // dropdownItem.dataset.id = token.id;
+
+    // 4. Set the text content
+    dropdownItem.textContent = `${token.symbol} - ${token.name}`;
+    dropdownItem.addEventListener("click", function() {
+        const main = this.closest(".dropdown");
+        main.querySelector(".btn-dropdown-text").innerText = this.dataset.name;
+        main.querySelector("#tokenInput").value = this.dataset.id;
+    });
+
+    return dropdownItem;
+}
+
+
 
 // --- Funções de Carregamento de Dados (chamadas à API) ---
 
@@ -455,7 +598,7 @@ function setupNewDashboardInteractions() {
  */
 async function loadWallets() {
     try {
-        loadFromLocalStorage(); // Garante que 'wallets' está populado
+        // loadFromLocalStorage(); // Garante que 'wallets' está populado
         renderWallets();
         updateWalletSelects();
     } catch (error) {
@@ -670,7 +813,7 @@ async function loadTokens() {
  * Usado no carregamento inicial da página.
  */
 async function loadData() {
-    loadFromLocalStorage(); // Garante que os dados do localStorage são carregados primeiro
+    // loadFromLocalStorage(); // Garante que os dados do localStorage são carregados primeiro
     await loadTokens(); // Carrega tokens e seus preços
     await loadDashboard(); // Usa os preços carregados para o dashboard
     await loadWallets();
@@ -1287,6 +1430,19 @@ async function removeNetworkFromWallet(walletId, balanceId) {
         showNotification(error.message, "error");
     }
 }
+
+if (!Element.prototype.closest) {
+        Element.prototype.closest = function(selector) {
+            let elem = this;
+            while (elem && elem.nodeType === 1) { // Check if it's an element node
+                if (elem.matches(selector)) {
+                    return elem;
+                }
+                elem = elem.parentNode;
+            }
+            return null;
+        };
+    }
 
 // --- Inicialização da Aplicação ---
 
