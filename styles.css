@@ -1990,7 +1990,7 @@ input:focus.dropdown-search{
 }
 .dropdown-list{
     display: none;
-    overflow-x: scroll;
+    overflow-y: scroll;
     padding-top: 5px;
     border-top: solid 1px rgba(255, 255, 255, 0.2);
 }
