@@ -22,7 +22,7 @@ const DEFAULT_INITIAL_DATA = {
                 {
                     "id": 1,
                     "network": "Ethereum",
-                    "token": "ETH",
+                    "token": "ethereum",
                     "balance": 0.5
                 },
                 {
@@ -122,25 +122,6 @@ const COINGECKO_API_BASE_URL = 'https://api.coingecko.com/api/v3';
 const COINGECKO_LIST =  COINGECKO_API_BASE_URL + '/coins/list';
 // const COINGECKO_LIST =  '/list.json'; // de teste
 
-// Mapeamento simples de símbolo para CoinGecko ID
-// IMPORTANTE: Expanda este mapa com os IDs CoinGecko dos seus tokens reais.
-// Você pode encontrar os IDs em https://www.coingecko.com/en/coins/all
-const COINGECKO_TOKEN_MAP = {
-    'ETH': 'ethereum',
-    'BTC': 'bitcoin',
-    'USDC': 'usd-coin',
-    'SOL': 'solana',
-    'BNB': 'binancecoin',
-    'POL': 'polygon',
-    'INF': 'injective-protocol',
-    'JITOSOL': 'jito-staked-sol',
-    'BONK': 'bonk',
-    'WSOL': 'wrapped-solana',
-    'SSOL': 'synapse-solana',
-    // Adicione mais mapeamentos conforme a necessidade dos seus tokens
-    // Exemplo: 'UNI': 'uniswap',
-};
-
 
 // Mock data for the new dashboard (será atualizado com dados reais das carteiras)
 const mockDashboardData = {
@@ -156,32 +137,41 @@ const mockDashboardData = {
 
 // --- Funções Auxiliares ---
 
+// Cache para preços de tokens por 10 segundos
+const tokenPriceCache = {};
+
 /**
- * Busca o preço atual de um token usando a CoinGecko API.
+ * Busca o preço atual de um token usando a CoinGecko API, com cache de 10 segundos.
  * @param {string} tokenSymbol - O símbolo do token (ex: 'eth', 'btc', 'sol').
  * @returns {Promise<number>} O preço do token em USD. Retorna 1 se não for encontrado ou em caso de erro.
  */
 async function fetchTokenPrice(tokenSymbol) {
+    const coinGeckoId = tokenSymbol.toLowerCase();
+    const now = Date.now();
+
+    // Verifica se existe cache válido (10 segundos)
+    if (
+        tokenPriceCache[coinGeckoId] &&
+        now - tokenPriceCache[coinGeckoId].timestamp < 10000
+    ) {
+        return tokenPriceCache[coinGeckoId].price;
+    }
+
     try {
-        const coinGeckoId = COINGECKO_TOKEN_MAP[tokenSymbol.toUpperCase()];
-
-        if (!coinGeckoId) {
-            console.warn(`CoinGecko ID não encontrado para o símbolo: ${tokenSymbol}. Usando preço padrão (1 USD).`);
-            return 1; // Retorna 1 se o ID não for encontrado
-        }
-
         const response = await fetch(`${COINGECKO_API_BASE_URL}/simple/price?ids=${coinGeckoId}&vs_currencies=usd`);
         if (!response.ok) {
-            // Se a resposta não for OK (ex: 429 Too Many Requests, 404 Not Found)
             console.error(`Erro ao buscar preço para ${tokenSymbol} (${coinGeckoId}): ${response.status} ${response.statusText}`);
+            tokenPriceCache[coinGeckoId] = { price: 1, timestamp: now };
             return 1; // Retorna 1 em caso de erro na resposta
         }
         const data = await response.json();
-        const price = data[coinGeckoId] ? data[coinGeckoId].usd : 1; // Retorna 1 como fallback se o preço não for encontrado no JSON
+        const price = data[coinGeckoId]?.usd ?? 1;
+        tokenPriceCache[coinGeckoId] = { price, timestamp: now };
         return price;
     } catch (error) {
         console.error(`Falha na requisição para CoinGecko API para ${tokenSymbol}:`, error);
-        return 1; // Retorna 1 em caso de erro na rede ou parse
+        tokenPriceCache[coinGeckoId] = { price: 1, timestamp: now };
+        return 1;
     }
 }
 
@@ -512,6 +502,13 @@ function setupNewDashboardInteractions() {
         btn.addEventListener('click', function() {
             const menu = this.parentElement.querySelector(".dropdown-menu");
             menu.classList.add("show");
+            
+            if(menu.querySelectorAll(".dropdown-item").length >= 1){
+                //Gambiarra pra manter o efeito
+                setTimeout(() => {
+                    menu.classList.add("full");
+                }, 100);
+            }
             const input = menu.querySelector(".dropdown-search");
             input.focus();
         });
@@ -523,6 +520,7 @@ function setupNewDashboardInteractions() {
             const menu = this.closest(".dropdown-menu");
             setTimeout(() => {
                 menu.classList.remove("show");
+                menu.classList.remove("full");
             }, 100);
         });
 
@@ -639,7 +637,7 @@ async function loadDashboard() {
             const walletNetworks = [];
 
             wallet.balances.forEach(balance => {
-                uniqueTokens.add(balance.token.toUpperCase());
+                uniqueTokens.add(balance.token);
                 walletNetworks.push({
                     network: balance.network,
                     token: balance.token,
@@ -664,7 +662,7 @@ async function loadDashboard() {
         wallets.forEach(wallet => {
             let walletTotalBalance = 0;
             wallet.balances.forEach(balance => {
-                const tokenSymbol = balance.token.toUpperCase();
+                const tokenSymbol = balance.token;
                 const price = tokenPrices[tokenSymbol] || 1; // Usa 1 como fallback se o preço não foi encontrado
                 const valueInUSD = balance.balance * price;
                 walletTotalBalance += valueInUSD;
@@ -776,7 +774,7 @@ async function loadTokens() {
 
         wallets.forEach(wallet => {
             wallet.balances.forEach(balance => {
-                const tokenSymbol = balance.token.toUpperCase(); // Padroniza o símbolo
+                const tokenSymbol = balance.token;
                 if (!userTokens[tokenSymbol]) {
                     userTokens[tokenSymbol] = {
                         name: tokenSymbol, 
@@ -916,7 +914,7 @@ function renderWallets() {
             <div class="network-badge-enhanced">
                 <i class="fas fa-network-wired"></i>
                 <span class="network-name">${balance.network}</span>
-                <span class="token-display">${balance.token}</span>
+                <span class="token-display">${balance.token.toUpperCase()}</span>
                 <span class="balance-display">${getTokenIconHtml(balance.token)} ${formatBalance(balance.balance)}</span>
                 <button class="remove-network" onclick="removeNetworkFromWallet(${wallet.id}, ${balance.id})" title="Remover rede">
                     <i class="fas fa-times"></i>
@@ -1232,7 +1230,7 @@ function setupForms() {
 
         const formData = {
             network: document.getElementById('networkInput').value.trim(),
-            token: document.getElementById('tokenInput').value.trim().toUpperCase(),
+            token: document.getElementById('tokenInput').value.trim(),
             balance: parseFloat(document.getElementById('initialBalance').value) || 0
         };
 
@@ -1258,7 +1256,11 @@ function setupForms() {
             saveToLocalStorage();
 
             closeModal("addNetworkModal");
+            //Limpar modal
             document.getElementById("addNetworkForm").reset();
+            document.querySelector(".btn-dropdown-text").innerHTML = "<div>Ex: ETH, wETH, POL, USDC</div>";
+            document.querySelector(".dropdown-list").innerHTML = "";
+            document.querySelector(".dropdown-search").value = "";
             // Recarrega todos os dados, pois adição de rede/token afeta carteiras, dashboard e tokens
             await loadData();
             showNotification("Rede e token adicionados com sucesso!", "success");
