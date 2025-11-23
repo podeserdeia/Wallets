@@ -142,11 +142,12 @@ const tokenPriceCache = {};
 
 /**
  * Busca o preço atual de um token usando a CoinGecko API, com cache de 10 segundos.
- * @param {string} tokenSymbol - O símbolo do token (ex: 'eth', 'btc', 'sol').
+ * @param {string} tokenSymbol - O ID da CoinGecko (ex: 'ethereum', 'bitcoin').
  * @returns {Promise<number>} O preço do token em USD. Retorna 1 se não for encontrado ou em caso de erro.
  */
 async function fetchTokenPrice(tokenSymbol) {
-    const coinGeckoId = tokenSymbol.toLowerCase();
+    // A API da CoinGecko para 'simple/price' aceita o ID da moeda (ex: 'ethereum'), não o símbolo (ex: 'eth').
+    const coinGeckoId = tokenSymbol.toLowerCase(); 
     const now = Date.now();
 
     // Verifica se existe cache válido (10 segundos)
@@ -160,7 +161,7 @@ async function fetchTokenPrice(tokenSymbol) {
     try {
         const response = await fetch(`${COINGECKO_API_BASE_URL}/simple/price?ids=${coinGeckoId}&vs_currencies=usd`);
         if (!response.ok) {
-            console.error(`Erro ao buscar preço para ${tokenSymbol} (${coinGeckoId}): ${response.status} ${response.statusText}`);
+            console.error(`Erro ao buscar preço para ID ${coinGeckoId}: ${response.status} ${response.statusText}`);
             tokenPriceCache[coinGeckoId] = { price: 1, timestamp: now };
             return 1; // Retorna 1 em caso de erro na resposta
         }
@@ -169,7 +170,7 @@ async function fetchTokenPrice(tokenSymbol) {
         tokenPriceCache[coinGeckoId] = { price, timestamp: now };
         return price;
     } catch (error) {
-        console.error(`Falha na requisição para CoinGecko API para ${tokenSymbol}:`, error);
+        console.error(`Falha na requisição para CoinGecko API para ID ${coinGeckoId}:`, error);
         tokenPriceCache[coinGeckoId] = { price: 1, timestamp: now };
         return 1;
     }
@@ -197,8 +198,18 @@ async function fetchTokenList() {
 function fetchAndSaveTokens(){
     console.log("Nova lista carregada!");
     fetchTokenList().then(s => {
-        listOfTokens = s;
-        localStorage.setItem("tokens", JSON.stringify({date: (new Date()).toUTCString(), list: s}));
+        // Garantir que 's' é uma array antes de salvar
+        if (Array.isArray(s)) {
+            listOfTokens = s;
+            localStorage.setItem("tokens", JSON.stringify({date: (new Date()).toUTCString(), list: s}));
+        } else {
+             console.error("A lista de tokens retornada pela API não é um array.");
+             // Pode tentar carregar do DEFAULT_INITIAL_DATA ou manter vazia
+             listOfTokens = [];
+        }
+    }).catch(error => {
+         console.error("Erro ao buscar e salvar tokens:", error);
+         listOfTokens = []; // Garante que a lista não é nula em caso de falha
     });
 }
 
@@ -216,7 +227,8 @@ function formatBalance(balance) {
     if (num === 0) return '0,00';
     if (Math.abs(num) >= 1) return num.toFixed(2).replace('.', ',');
     if (Math.abs(num) >= 0.01) return num.toFixed(4).replace('.', ',');
-    return num.toFixed(8).replace('.', ',');
+    // Se for muito pequeno, mostra mais casas para não arredondar para zero
+    return num.toFixed(8).replace('.', ','); 
 }
 
 /**
@@ -225,24 +237,33 @@ function formatBalance(balance) {
  * @returns {string} O HTML do elemento <i> com o ícone Font Awesome.
  */
 function getTokenIconHtml(tokenSymbol) {
-    const upperSymbol = tokenSymbol.toUpperCase();
+    // Se tokenSymbol for o ID CoinGecko (ex: 'ethereum'), usa o primeiro símbolo
+    const upperSymbol = (tokenSymbol || '').toUpperCase();
     switch (upperSymbol) {
         case 'ETH':
+        case 'ETHEREUM':
             return '<i class="fab fa-ethereum"></i>';
         case 'BTC':
+        case 'BITCOIN':
             return '<i class="fab fa-bitcoin"></i>';
         case 'USDC':
+        case 'USDT':
+        case 'DAI':
             return '<i class="fas fa-dollar-sign"></i>'; // Icone de dólar para stablecoins baseadas em USD
         case 'BNB':
+        case 'BINANCECOIN':
             return '<i class="fas fa-coins"></i>'; // Sem ícone Font Awesome oficial, usando um genérico
         case 'POL': // Polygon
+        case 'POLYGON':
             return '<i class="fas fa-cubes"></i>'; // Ícone genérico de blocos
         case 'XDAI':
             return '<i class="fas fa-coins"></i>'; // Ícone genérico de moedas
         case 'MELON': // Exemplo para o seu "MELON"
             return '<i class="fas fa-seedling"></i>'; // Exemplo de ícone, ajuste se preferir outro
         case 'SOL':
-            return '<i class="fab fa-solana"></i>'; // Se Font Awesome tiver (pode precisar de versão mais recente)
+        case 'SOLANA':
+            // Assume que Font Awesome 6 está disponível para este ícone
+            return '<i class="fab fa-solana"></i>'; 
         case 'USD': // Para representar valores totais em dólar
             return '<i class="fas fa-dollar-sign"></i>';
         default:
@@ -336,7 +357,8 @@ function updateNetWorthCard() {
     // Update net worth amount
     const amountEl = document.querySelector('.net-worth-amount');
     if (amountEl) {
-        amountEl.textContent = `$${data.usd.toFixed(2).replace('.', ',')}`;
+        // Usa formatBalance para consistência, mas força 2 casas para o total em USD
+        amountEl.textContent = `$${data.usd.toFixed(2).replace('.', ',')}`; 
     }
 }
 
@@ -352,7 +374,8 @@ function updateWalletBreakdownCard() {
         progressBar.innerHTML = '';
         assets.forEach(asset => {
             const segment = document.createElement('div');
-            segment.className = `progress-segment ${asset.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+            // Remove caracteres especiais e espaços para o nome da classe
+            segment.className = `progress-segment ${asset.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`; 
             segment.style.width = `${asset.percentage}%`;
             segment.style.backgroundColor = asset.color;
             progressBar.appendChild(segment);
@@ -390,7 +413,8 @@ function updatePositionsSection() {
         positionsGrid.innerHTML = ''; 
         positions.forEach(position => {
             const positionCard = document.createElement('div');
-            positionCard.className = `position-card ${position.name.toLowerCase().replace(/\s/g, '-')}`;
+            // Substitui espaços por traços para o nome da classe
+            positionCard.className = `position-card ${position.name.toLowerCase().replace(/\s/g, '-')}`; 
             positionCard.innerHTML = `
                 <div class="position-icon" style="background-color: ${position.color}">
                     <i class="${position.icon}"></i>
@@ -475,7 +499,7 @@ function setupNewDashboardInteractions() {
     const collapseBtn = document.querySelector('.collapse-btn');
     if (collapseBtn) {
         collapseBtn.addEventListener('click', () => {
-            const positionsSection = document.querySelector('.positions-section');
+            // Note: positionsSection is not used in the logic, removed reference to avoid confusion
             const icon = collapseBtn.querySelector('i');
             const positionContents = document.querySelectorAll('.position-content');
             
@@ -524,43 +548,110 @@ function setupNewDashboardInteractions() {
             }, 100);
         });
 
-        input.addEventListener('keyup', function() {
-            let filter = [];
-            const menu = this.closest(".dropdown-menu");
-            if(this.value.length > 0){
-                filter = listOfTokens.filter(s => s.symbol == this.value);
+        // Remove tokens duplicados por símbolo e prioriza o "nativo"
+function deduplicateTokensBySymbol(tokens) {
+    const bySymbol = {};
+    const BAD_KEYWORDS = [
+        'bridged', 'bridge', 'wormhole', 'binance-peg', 'pegged',
+        'wrapped', 'allbridge', 'neonpass', 'osmosis', 'hyperlane',
+        'near protocol', 'eclipse', 'evm', 'stake', 'staking'
+    ];
 
-                filter = [... filter, ...listOfTokens.filter(s => s.symbol.includes(this.value))];
+    function scoreToken(t) {
+        const name = (t.name || '').toLowerCase();
+        const id = (t.id || '').toLowerCase();
 
-                // Filtrar pelo nome caso a quantidade maxina não tenha sido atingida
-                if(filter.length < SEARCH_MAX_LENGTH){
-                    filter = [... filter, ...listOfTokens.filter(s => s.name.includes(this.value))];
+        let score = 0;
+
+        // NÃO ter palavras de bridge/peg/etc dá muitos pontos
+        if (!BAD_KEYWORDS.some(k => name.includes(k))) score += 50;
+
+        // nomes menores tendem a ser o ativo nativo (ex: "Solana" vs "Allbridge Bridged SOL (Near Protocol)")
+        score += Math.max(0, 30 - name.length);
+
+        // ids simples (sem muito traço) também contam um pouco
+        if (!id.includes('-')) score += 5;
+
+        return score;
+    }
+
+    tokens.forEach(t => {
+        const symbol = (t.symbol || '').toLowerCase();
+        if (!symbol) return;
+
+        if (!bySymbol[symbol]) {
+            bySymbol[symbol] = t;
+        } else {
+            const current = bySymbol[symbol];
+            if (scoreToken(t) > scoreToken(current)) {
+                bySymbol[symbol] = t;
+            }
+        }
+    });
+
+    return Object.values(bySymbol);
+}
+
+            // --- Lógica de Pesquisa Corrigida ---
+            input.addEventListener('keyup', function() {
+                const search = this.value.trim().toLowerCase();
+                const menu = this.closest(".dropdown-menu");
+                const list = menu.querySelector(".dropdown-list");
+                list.innerHTML = ""; // Limpa resultados anteriores
+
+                let filter = [];
+
+                if (search.length > 0) {
+                    const allTokens = listOfTokens;
+                    
+                    // 1) Símbolo Exato (Prioridade Máxima)
+                    const bySymbolExact = allTokens.filter(s =>
+                        (s.symbol || '').toLowerCase() === search
+                    );
+                    
+                    // 2) Símbolo Contendo o Texto
+                    const bySymbolPartial = allTokens.filter(s =>
+                        (s.symbol || '').toLowerCase().includes(search) &&
+                        (s.symbol || '').toLowerCase() !== search // Exclui os exatos já capturados
+                    );
+                    
+                    // 3) Nome Contendo o Texto
+                    const byNamePartial = allTokens.filter(s =>
+                        (s.name || '').toLowerCase().includes(search)
+                    );
+                    
+                    // Concatena na ordem de prioridade
+                    filter = [...bySymbolExact, ...bySymbolPartial, ...byNamePartial];
+
+                    // Remove duplicados e escolhe o "nativo" pra cada símbolo
+                    filter = deduplicateTokensBySymbol(filter);
+
+                    // Aplica limite final
+                    filter = filter.slice(0, SEARCH_MAX_LENGTH);
+                }
+                
+                // Ajusta o tamanho do menu
+                if(filter.length > 5){
+                    menu.classList.add("full");
+                }else{
+                    menu.classList.remove("full");
                 }
 
-                filter = filter.slice(0, SEARCH_MAX_LENGTH);
-            }
-            if(filter.length > 5){
-                menu.classList.add("full");
-            }else{
-                menu.classList.remove("full");
-            }
-
-            const list = this.parentElement.querySelector(".dropdown-list");
-            list.innerHTML = "";
-
-            filter.forEach(s => {
-                list.appendChild(createDropdownItemElement(s, this.value));
-            })
-        });
+                // Renderiza os resultados
+                filter.forEach(s => {
+                    list.appendChild(createDropdownItemElement(s)); // Não precisa do 'this.value'
+                });
+            });
+            // --- Fim Lógica de Pesquisa Corrigida ---
     });
 }
 
 /**
  * Creates a new dropdown item element based on token data.
  * @param {object} token - An object containing id, symbol, and name properties.
- * @param {string} token.id - The unique ID for the data-id attribute.
- * @param {string} token.symbol - The symbol of the token (e.g., BTC).
- * @param {string} token.name - The full name of the token (e.g., Bitcoin).
+ * @param {string} token.id - O ID da CoinGecko (ex: 'ethereum').
+ * @param {string} token.symbol - O símbolo do token (ex: BTC).
+ * @param {string} token.name - O nome completo do token (ex: Bitcoin).
  * @returns {HTMLDivElement} The newly created div element.
  */
 function createDropdownItemElement(token) {
@@ -570,19 +661,31 @@ function createDropdownItemElement(token) {
     // 2. Add the class 'dropdown-item'
     dropdownItem.classList.add('dropdown-item');
 
-    // 3. Set the data-id attribute
+    // 3. Set the data-id e data-name attributes (ID da CoinGecko e Nome Completo)
     dropdownItem.setAttribute('data-id', token.id);
     dropdownItem.setAttribute('data-name', token.name);
-    // Alternatively, using dataset (more modern for data-* attributes):
-    // dropdownItem.dataset.id = token.id;
 
     // 4. Set the text content
-    dropdownItem.textContent = `${token.symbol} - ${token.name}`;
+    // Exibe Símbolo - Nome para clareza
+    dropdownItem.textContent = `${(token.symbol || 'N/A').toUpperCase()} - ${token.name || 'Nome Desconhecido'}`;
+    
+    // --- Lógica de Clique Corrigida ---
     dropdownItem.addEventListener("click", function() {
         const main = this.closest(".dropdown");
-        main.querySelector(".btn-dropdown-text").innerText = this.dataset.name;
-        main.querySelector("#tokenInput").value = this.dataset.id;
+        const tokenID = this.dataset.id;
+        const tokenName = this.dataset.name;
+        
+        // Define o nome visível
+        main.querySelector(".btn-dropdown-text").innerText = tokenName;
+        // Define o ID do CoinGecko no input oculto (#tokenInput)
+        main.querySelector("#tokenInput").value = tokenID; 
+        
+        // Fechar o dropdown após a seleção
+        const menu = main.querySelector(".dropdown-menu");
+        menu.classList.remove("show");
+        menu.classList.remove("full");
     });
+    // --- Fim Lógica de Clique Corrigida ---
 
     return dropdownItem;
 }
@@ -629,18 +732,19 @@ async function loadDashboard() {
         const balanceByNetwork = {};
         const balanceByToken = {};
         const walletBalances = [];
-        const uniqueTokens = new Set(); // Para coletar tokens únicos para buscar preços
+        const uniqueIds = new Set(); // Para coletar IDs (CoinGecko) de tokens únicos para buscar preços
 
-        // Primeiro, coleta os balanços e tokens únicos
+        // Primeiro, coleta os balanços e IDs únicos
         wallets.forEach(wallet => {
             let walletTotalBalance = 0;
             const walletNetworks = [];
 
             wallet.balances.forEach(balance => {
-                uniqueTokens.add(balance.token);
+                // O campo `token` no `balances` é o ID da CoinGecko (ex: 'ethereum').
+                uniqueIds.add(balance.token); 
                 walletNetworks.push({
                     network: balance.network,
-                    token: balance.token,
+                    token: balance.token, // ID da CoinGecko
                     balance: balance.balance
                 });
             });
@@ -654,21 +758,23 @@ async function loadDashboard() {
 
         // Mapeia tokens únicos para seus preços
         const tokenPrices = {};
-        await Promise.all(Array.from(uniqueTokens).map(async symbol => {
-            tokenPrices[symbol] = await fetchTokenPrice(symbol);
+        // Usa os IDs únicos para buscar preços
+        await Promise.all(Array.from(uniqueIds).map(async id => {
+            tokenPrices[id] = await fetchTokenPrice(id);
         }));
 
         // Agora, calcula os balanços totais e por rede/token usando os preços reais
         wallets.forEach(wallet => {
             let walletTotalBalance = 0;
             wallet.balances.forEach(balance => {
-                const tokenSymbol = balance.token;
-                const price = tokenPrices[tokenSymbol] || 1; // Usa 1 como fallback se o preço não foi encontrado
+                const tokenId = balance.token; // ID da CoinGecko
+                const price = tokenPrices[tokenId] || 1; // Usa 1 como fallback se o preço não foi encontrado
                 const valueInUSD = balance.balance * price;
                 walletTotalBalance += valueInUSD;
 
                 balanceByNetwork[balance.network] = (balanceByNetwork[balance.network] || 0) + valueInUSD;
-                balanceByToken[tokenSymbol] = (balanceByToken[tokenSymbol] || 0) + valueInUSD;
+                // Usa o tokenId (ex: ethereum) para agrupar por token
+                balanceByToken[tokenId.toUpperCase()] = (balanceByToken[tokenId.toUpperCase()] || 0) + valueInUSD; 
             });
 
             // Atualiza o total_balance para a carteira no mockDashboardData
@@ -680,7 +786,8 @@ async function loadDashboard() {
         });
 
         // Calcula o total de SOL (se aplicável, aqui apenas um mock, ou você pode buscar o preço do SOL)
-        const solPrice = tokenPrices['SOL'] || 30; // Preço do SOL, se não for buscado
+        // Usa o preço de 'solana' se ele estiver na lista de symbols buscados, senão usa um fallback
+        const solPrice = tokenPrices['solana'] || 30; 
         totalBalanceSOL = totalBalanceUSD / solPrice; 
 
         const dashboardData = {
@@ -774,11 +881,13 @@ async function loadTokens() {
 
         wallets.forEach(wallet => {
             wallet.balances.forEach(balance => {
-                const tokenSymbol = balance.token;
-                if (!userTokens[tokenSymbol]) {
-                    userTokens[tokenSymbol] = {
-                        name: tokenSymbol, 
-                        symbol: tokenSymbol,
+                // Usa o token ID da CoinGecko como chave
+                const tokenId = balance.token; 
+                // Usamos o ID do balanço para a chave
+                if (!userTokens[tokenId]) {
+                    userTokens[tokenId] = {
+                        name: tokenId.toUpperCase(), // Nome provisório, usaremos o ID em maiúsculo
+                        symbol: tokenId, // Usamos o ID como 'symbol' para a busca de preço
                         type: balance.network, 
                         balance: 0,
                         price: 0, // Preço inicializado como 0
@@ -786,7 +895,7 @@ async function loadTokens() {
                         logo: '' // Adicione lógica para logos reais se tiver URLs
                     };
                 }
-                userTokens[tokenSymbol].balance += balance.balance;
+                userTokens[tokenId].balance += balance.balance;
             });
         });
 
@@ -794,7 +903,8 @@ async function loadTokens() {
 
         // Para cada token, busca o preço real e calcula o valor
         await Promise.all(tokensArray.map(async token => {
-            const price = await fetchTokenPrice(token.symbol);
+            // Usa o 'token.symbol' (que é o ID da CoinGecko) para buscar o preço
+            const price = await fetchTokenPrice(token.symbol); 
             token.price = price;
             token.value = token.balance * token.price;
         }));
@@ -851,7 +961,8 @@ function renderDashboard(data) {
         Object.entries(data.balance_by_token).forEach(([token, balance]) => {
             const tokenItem = document.createElement('div');
             tokenItem.className = 'token-item';
-            tokenItem.innerHTML = `
+            // O nome do token aqui é o ID em maiúsculo (ex: ETHEREUM)
+            tokenItem.innerHTML = ` 
                 <span class="token-name">${token}</span>
                 <span class="token-balance">${getTokenIconHtml(token)} ${formatBalance(balance)}</span>
             `;
@@ -870,8 +981,9 @@ function renderDashboard(data) {
             walletItem.className = 'wallet-summary-item';
 
             const networksHtml = wallet.networks.map(n => {
-                const icon = getTokenIconHtml(n.token);
-                return `<span class="wallet-summary-network">${n.network}<span class="wallet-summary-token">${n.token}</span>: ${icon} ${formatBalance(n.balance)}</span>`;
+                const icon = getTokenIconHtml(n.token); // n.token é o ID CoinGecko (ex: ethereum)
+                // Exibe o ID em maiúsculo (ex: ETHEREUM)
+                return `<span class="wallet-summary-network">${n.network}<span class="wallet-summary-token">${n.token.toUpperCase()}</span>: ${icon} ${formatBalance(n.balance)}</span>`;
             }).join('');
 
             walletItem.innerHTML = `
@@ -979,15 +1091,18 @@ function renderTransactions() {
         const amount = Math.abs(transaction.amount);
         const sign = transaction.type === 'entrada' ? '+' : '-';
 
+        // Tenta encontrar o nome da carteira pelo ID, se não estiver na transação
+        const walletName = transaction.wallet_name || (wallets.find(w => w.id === transaction.wallet_id)?.name || `Carteira #${transaction.wallet_id}`);
+
         transactionItem.innerHTML = `
             <div class="transaction-type ${transaction.type}">
                 <i class="fas ${transaction.type === 'entrada' ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
             </div>
             <div class="transaction-info">
                 <h4>${transaction.description || 'Sem descrição'}</h4>
-                <p>${transaction.wallet_name}
+                <p>${walletName}
                     <span class="transaction-network">${transaction.network}</span>
-                    <span class="transaction-token">${transaction.token}</span>
+                    <span class="transaction-token">${transaction.token.toUpperCase()}</span>
                 </p>
             </div>
             <div class="transaction-amount ${transaction.type}">
@@ -1028,11 +1143,11 @@ function renderTokens(tokens) {
             <td>
                 <div class="token-info">
                     <img src="${token.logo}" alt="${token.name} Logo" class="token-logo" onerror="this.style.display='none'">
-                    <span class="token-name">${token.name}</span>
+                    <span class="token-name">${token.symbol.toUpperCase()}</span> 
                 </div>
             </td>
             <td><span class="token-type-badge">${token.type}</span></td>
-            <td class="balance">${formatBalance(token.balance)} ${token.symbol}</td>
+            <td class="balance">${formatBalance(token.balance)} ${token.symbol.toUpperCase()}</td>
             <td class="price">${getTokenIconHtml('USD')}${formatBalance(token.price)}</td>
             <td class="value">${getTokenIconHtml('USD')}${formatBalance(token.value)}</td>
             `;
@@ -1109,13 +1224,13 @@ function updateTokenFilter() {
 
     clearSelectOptions(tokenFilter);
 
-    // Obtém tokens únicos das transações
+    // Obtém tokens únicos das transações (ID CoinGecko)
     const tokens = [...new Set(transactions.map(t => t.token))];
 
     tokens.forEach(token => {
         const option = document.createElement('option');
         option.value = token;
-        option.textContent = token;
+        option.textContent = token.toUpperCase(); // Exibe o ID em maiúsculo
         tokenFilter.appendChild(option);
     });
 
@@ -1139,8 +1254,10 @@ function updateTransactionNetworkTokens() {
         if (wallet && wallet.balances.length > 0) {
             wallet.balances.forEach(balance => {
                 const option = document.createElement('option');
-                option.value = `${balance.network}|${balance.token}`; // Combina rede e token no valor
-                option.textContent = `${balance.network} - ${balance.token}`;
+                // Combina rede e token (ID CoinGecko) no valor
+                option.value = `${balance.network}|${balance.token}`; 
+                // Exibe Rede - ID em maiúsculo
+                option.textContent = `${balance.network} - ${balance.token.toUpperCase()}`; 
                 networkTokenSelect.appendChild(option);
             });
         }
@@ -1203,6 +1320,11 @@ function setupForms() {
             address: document.getElementById('walletAddress').value
         };
 
+        if (!formData.name || !formData.address) {
+             showNotification('Nome e endereço são obrigatórios', 'error');
+             return;
+        }
+
         try {
             // Adiciona a nova carteira ao array local
             const newWallet = {
@@ -1228,9 +1350,25 @@ function setupForms() {
     document.getElementById('addNetworkForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        // O #tokenInput agora guarda o ID da CoinGecko
+        const tokenCoinGeckoId = document.getElementById('tokenInput').value.trim();
+        // O btn-dropdown-text guarda o Nome completo (ex: Bitcoin)
+        const tokenName = document.querySelector(".dropdown-search").value.trim() || document.querySelector(".btn-dropdown-text").innerText.trim();
+        
+        // Tenta encontrar o símbolo a partir do ID na lista de tokens
+        let tokenSymbol = tokenCoinGeckoId; // Fallback: usa o ID como símbolo
+        const foundToken = listOfTokens.find(t => t.id === tokenCoinGeckoId);
+        if (foundToken) {
+            tokenSymbol = foundToken.symbol; // Usa o símbolo real se encontrado
+        } else {
+            // Se não encontrou, tenta deduzir o símbolo a partir do nome se for um token simples (ex: ETH)
+            tokenSymbol = tokenName.toUpperCase();
+        }
+
         const formData = {
             network: document.getElementById('networkInput').value.trim(),
-            token: document.getElementById('tokenInput').value.trim(),
+            // CORREÇÃO: Usamos APENAS o ID da CoinGecko (que é o que o fetchTokenPrice precisa)
+            token: tokenCoinGeckoId, 
             balance: parseFloat(document.getElementById('initialBalance').value) || 0
         };
 
@@ -1239,28 +1377,46 @@ function setupForms() {
             return;
         }
 
+        if (isNaN(formData.balance) || formData.balance < 0) {
+             showNotification('Saldo inicial deve ser um valor numérico positivo', 'error');
+             return;
+        }
+
         try {
             const wallet = wallets.find(w => w.id === currentWalletId);
             if (!wallet) {
                 throw new Error("Carteira não encontrada");
             }
 
-            // Adiciona o novo saldo ao array de balances da carteira
-            const newBalance = {
-                id: wallet.balances.length > 0 ? Math.max(...wallet.balances.map(b => b.id)) + 1 : 1,
-                network: formData.network,
-                token: formData.token,
-                balance: formData.balance
-            };
-            wallet.balances.push(newBalance);
+            // Verifica se a combinação rede/token já existe
+            const existingBalance = wallet.balances.find(b => 
+                b.network === formData.network && b.token === formData.token
+            );
+
+            if (existingBalance) {
+                // Atualiza o saldo existente
+                existingBalance.balance += formData.balance; 
+            } else {
+                // Adiciona o novo saldo ao array de balances da carteira
+                const newBalance = {
+                    id: wallet.balances.length > 0 ? Math.max(...wallet.balances.map(b => b.id)) + 1 : 1,
+                    network: formData.network,
+                    token: formData.token, // ID da CoinGecko
+                    balance: formData.balance
+                };
+                wallet.balances.push(newBalance);
+            }
+
             saveToLocalStorage();
 
             closeModal("addNetworkModal");
             //Limpar modal
             document.getElementById("addNetworkForm").reset();
             document.querySelector(".btn-dropdown-text").innerHTML = "<div>Ex: ETH, wETH, POL, USDC</div>";
-            document.querySelector(".dropdown-list").innerHTML = "";
             document.querySelector(".dropdown-search").value = "";
+            document.querySelector("#tokenInput").value = ""; // Limpa o ID CoinGecko
+            document.querySelector(".dropdown-list").innerHTML = "";
+
             // Recarrega todos os dados, pois adição de rede/token afeta carteiras, dashboard e tokens
             await loadData();
             showNotification("Rede e token adicionados com sucesso!", "success");
@@ -1279,17 +1435,23 @@ function setupForms() {
             return;
         }
 
-        // Separa a rede e o token do valor combinado no select
+        // Separa a rede e o token (ID CoinGecko) do valor combinado no select
         const [network, token] = networkTokenValue.split('|');
 
         const formData = {
             wallet_id: parseInt(document.getElementById('transactionWallet').value),
             network: network,
-            token: token,
+            token: token, // ID da CoinGecko
             type: document.getElementById('transactionType').value,
             amount: parseFloat(document.getElementById('transactionAmount').value),
             description: document.getElementById('transactionDescription').value
         };
+
+        if (isNaN(formData.amount) || formData.amount <= 0) {
+             showNotification('Valor da transação inválido', 'error');
+             return;
+        }
+
 
         try {
             // Encontra a carteira para obter o nome
@@ -1309,10 +1471,12 @@ function setupForms() {
             } else {
                 // Se o token não existir na carteira para a rede, adiciona
                 const newBalanceId = wallet.balances.length > 0 ? Math.max(...wallet.balances.map(b => b.id)) + 1 : 1;
+                // O saldo inicial será o valor da transação. 
+                // Note que o saldo pode ser negativo se for uma 'saida' e o token não existia.
                 wallet.balances.push({
                     id: newBalanceId,
                     network: network,
-                    token: token,
+                    token: token, // ID da CoinGecko
                     balance: formData.type === 'entrada' ? formData.amount : -formData.amount
                 });
             }
@@ -1322,7 +1486,7 @@ function setupForms() {
             const newTransaction = {
                 id: transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1,
                 date: new Date().toISOString(), // Data atual
-                wallet_name: wallet.name,
+                wallet_name: wallet.name, // Guarda o nome da carteira na transação
                 ...formData
             };
             transactions.push(newTransaction);
@@ -1354,6 +1518,13 @@ function showAddWalletModal() {
 
 function showAddNetworkModal(walletId) {
     currentWalletId = walletId; // Define a carteira atual para o modal de adicionar rede
+    // Reseta o formulário e os campos de busca ao abrir
+    document.getElementById("addNetworkForm").reset();
+    document.querySelector(".btn-dropdown-text").innerHTML = "<div>Ex: ETH, wETH, POL, USDC</div>";
+    document.querySelector(".dropdown-search").value = "";
+    document.querySelector("#tokenInput").value = "";
+    document.querySelector(".dropdown-list").innerHTML = "";
+
     document.getElementById('addNetworkModal').classList.add('active');
 }
 
@@ -1434,6 +1605,7 @@ async function removeNetworkFromWallet(walletId, balanceId) {
 }
 
 if (!Element.prototype.closest) {
+        // Polyfill para Element.closest em navegadores mais antigos
         Element.prototype.closest = function(selector) {
             let elem = this;
             while (elem && elem.nodeType === 1) { // Check if it's an element node
